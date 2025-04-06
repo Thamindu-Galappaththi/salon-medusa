@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Salon Medusa | Luxury Hair & Beauty Experience</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#FCF6F9',
+                            100: '#F9EDF3',
+                            200: '#F3DBE7',
+                            300: '#ECC9DB',
+                            400: '#E0A4C3',
+                            500: '#D47FAB',
+                            600: '#BF599A',
+                            700: '#A93B84',
+                            800: '#892E6A',
+                            900: '#6A2251',
+                        },
+                        secondary: {
+                            50: '#F4F9FB',
+                            100: '#C8E7EF',
+                            200: '#9CD5E3',
+                            300: '#70C3D7',
+                            400: '#44B1CB',
+                            500: '#1B9EBF',
+                            600: '#168099',
+                            700: '#116273',
+                            800: '#0B434D',
+                            900: '#062527',
+                        },
+                    },
+                    fontFamily: {
+                        display: ['Cormorant Garamond', 'serif'],
+                        sans: ['DM Sans', 'sans-serif'],
+                    },
+                    animation: {
+                        'float-slow': 'float 6s ease-in-out infinite',
+                        'float-medium': 'float 4s ease-in-out infinite',
+                        'float-fast': 'float 3s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .animate-fadeIn {
+            animation: fadeIn 1s ease-in-out;
+        }
+        
+        .parallax {
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.75);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(90deg, #A93B84 0%, #1B9EBF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .text-stroke {
+            -webkit-text-stroke: 1px #D47FAB;
+            color: transparent;
+        }
+        
+        .service-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .service-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        #threejs-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+        }
+        
+        #p5-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            opacity: 0.05;
+        }
+    </style>
+</head>
+
+<body class="bg-primary-50 text-gray-800 font-sans">
+    <!-- Three.js Background -->
+    <div id="threejs-container"></div>
+
+    <!-- p5.js Background -->
+    <div id="p5-background"></div>
+
+    <!-- Preloader -->
+    <div id="preloader" class="fixed inset-0 z-50 flex items-center justify-center bg-primary-50 transition-opacity duration-500">
+        <div class="text-center">
+            <div class="w-20 h-20 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 class="font-display text-3xl font-bold gradient-text">Salon Medusa</h2>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-primary-50/80 backdrop-blur-md shadow-sm border-b border-primary-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="#" class="font-display text-2xl font-bold gradient-text flex items-center">
+                        <svg class="w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="url(#gradient)"/>
+              <path d="M12 6C8.69 6 6 8.69 6 12C6 15.31 8.69 18 12 18C15.31 18 18 15.31 18 12C18 8.69 15.31 6 12 6ZM12 16C9.79 16 8 14.21 8 12C8 9.79 9.79 8 12 8C14.21 8 16 9.79 16 12C16 14.21 14.21 16 12 16Z" fill="url(#gradient)"/>
+              <defs>
+                <linearGradient id="gradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#A93B84"/>
+                  <stop offset="1" stop-color="#1B9EBF"/>
+                </linearGradient>
+              </defs>
+            </svg> Salon Medusa
+                    </a>
+                </div>
+                <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
+                    <a href="#home" class="text-gray-700 hover:text-primary-700 px-3 py-2 font-medium transition relative group">
+            Home
+            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+          </a>
+                    <a href="#services" class="text-gray-700 hover:text-primary-700 px-3 py-2 font-medium transition relative group">
+            Services
+            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+          </a>
+                    <a href="#specialists" class="text-gray-700 hover:text-primary-700 px-3 py-2 font-medium transition relative group">
+            Specialists
+            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+          </a>
+                    <a href="#experiences" class="text-gray-700 hover:text-primary-700 px-3 py-2 font-medium transition relative group">
+            Experiences
+            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+          </a>
+                    <a href="#gallery" class="text-gray-700 hover:text-primary-700 px-3 py-2 font-medium transition relative group">
+            Gallery
+            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+          </a>
+                    <a href="#testimonials" class="text-gray-700 hover:text-primary-700 px-3 py-2 font-medium transition relative group">
+            Testimonials
+            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+          </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="#booking" class="hidden md:inline-block bg-gradient-to-r from-primary-600 to-secondary-500 hover:from-primary-700 hover:to-secondary-600 text-white font-semibold py-2 px-6 rounded-full transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105">
+            Book Now
+          </a>
+                    <button id="mobile-menu-button" class="md:hidden flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-primary-700 focus:outline-none">
+            <svg class="h-8 w-8" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-200 shadow-lg">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="#home" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-700 hover:bg-primary-50">Home</a>
+                <a href="#services" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-700 hover:bg-primary-50">Services</a>
+                <a href="#specialists" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-700 hover:bg-primary-50">Specialists</a>
+                <a href="#experiences" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-700 hover:bg-primary-50">Experiences</a>
+                <a href="#gallery" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-700 hover:bg-primary-50">Gallery</a>
+                <a href="#testimonials" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-700 hover:bg-primary-50">Testimonials</a>
+                <a href="#booking" class="block px-3 py-2 rounded-md text-base font-medium bg-gradient-to-r from-primary-600 to-secondary-500 text-white hover:from-primary-700 hover:to-secondary-600 mt-2 text-center">Book Now</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="pt-32 pb-20 md:pt-40 md:pb-32 px-6 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto">
+            <div class="relative z-10 text-center">
+                <h1 class="text-5xl md:text-7xl font-display font-bold mb-6 animate-fadeIn">
+                    <span class="gradient-text">Transform</span>
+                    <span class="text-gray-800"> Your Beauty</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto mb-10 animate-fadeIn">
+                    Experience the pinnacle of luxury hair and beauty treatments at Salon Medusa, where artistry meets innovation.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4 animate-fadeIn">
+                    <a href="#booking" class="bg-gradient-to-r from-primary-600 to-secondary-500 hover:from-primary-700 hover:to-secondary-600 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 text-lg">
+            Book Appointment
+          </a>
+                    <a href="#services" class="bg-white hover:bg-gray-50 text-gray-800 font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 border border-gray-200 text-lg">
+            Explore Services
+          </a>
+                </div>
+            </div>
+
+            <!-- Floating decorative elements -->
+            <div class="hidden lg:block">
+                <div class="absolute top-1/4 left-10 w-8 h-8 rounded-full bg-primary-400 opacity-30 animate-float-slow"></div>
+                <div class="absolute top-1/3 right-20 w-12 h-12 rounded-full bg-secondary-300 opacity-20 animate-float-medium"></div>
+                <div class="absolute bottom-1/4 left-1/4 w-10 h-10 rounded-full bg-primary-500 opacity-25 animate-float-fast"></div>
+                <div class="absolute top-1/2 right-1/3 w-6 h-6 rounded-full bg-secondary-400 opacity-30 animate-float-slow"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-12 bg-gradient-to-r from-primary-50 to-secondary-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="p-6">
+                    <div class="text-4xl md:text-5xl font-display font-bold gradient-text mb-2">15+</div>
+                    <div class="text-gray-600 font-medium">Years Experience</div>
+                </div>
+                <div class="p-6">
+                    <div class="text-4xl md:text-5xl font-display font-bold gradient-text mb-2">50+</div>
+                    <div class="text-gray-600 font-medium">Professional Awards</div>
+                </div>
+                <div class="p-6">
+                    <div class="text-4xl md:text-5xl font-display font-bold gradient-text mb-2">10K+</div>
+                    <div class="text-gray-600 font-medium">Happy Clients</div>
+                </div>
+                <div class="p-6">
+                    <div class="text-4xl md:text-5xl font-display font-bold gradient-text mb-2">100%</div>
+                    <div class="text-gray-600 font-medium">Satisfaction</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-16 md:py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-display font-bold gradient-text inline-block mb-4">Our Signature Services</h2>
+                <div class="w-24 h-1 bg-gradient-to-r from-primary-600 to-secondary-500 mx-auto mt-2 mb-6"></div>
+                <p class="text-gray-600 max-w-2xl mx-auto">From precision haircuts to transformative color treatments, our services are designed to enhance your natural beauty.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Service 1 -->
+                <div class="service-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+                    <div class="h-48 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
+                        <svg class="w-20 h-20 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Precision Haircut</h3>
+                        <p class="text-gray-600 mb-4">Expertly tailored cuts that complement your facial structure and lifestyle, using the latest techniques.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary-700 font-bold">From $85</span>
+                            <a href="#booking" class="text-sm font-semibold text-primary-600 hover:text-primary-800 transition">Book Now →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 2 -->
+                <div class="service-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+                    <div class="h-48 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
+                        <svg class="w-20 h-20 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+            </svg>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Creative Coloring</h3>
+                        <p class="text-gray-600 mb-4">Custom color formulations and techniques for vibrant, healthy-looking hair that turns heads.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary-700 font-bold">From $120</span>
+                            <a href="#booking" class="text-sm font-semibold text-primary-600 hover:text-primary-800 transition">Book Now →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 3 -->
+                <div class="service-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+                    <div class="h-48 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
+                        <svg class="w-20 h-20 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Hair Treatments</h3>
+                        <p class="text-gray-600 mb-4">Restorative treatments that repair damage, add shine, and improve hair health from root to tip.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary-700 font-bold">From $75</span>
+                            <a href="#booking" class="text-sm font-semibold text-primary-600 hover:text-primary-800 transition">Book Now →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 4 -->
+                <div class="service-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+                    <div class="h-48 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
+                        <svg class="w-20 h-20 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Bridal Packages</h3>
+                        <p class="text-gray-600 mb-4">Complete bridal beauty solutions including hair, makeup, and pre-wedding treatments for your special day.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary-700 font-bold">From $350</span>
+                            <a href="#booking" class="text-sm font-semibold text-primary-600 hover:text-primary-800 transition">Book Now →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 5 -->
+                <div class="service-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+                    <div class="h-48 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
+                        <svg class="w-20 h-20 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Skin Therapies</h3>
+                        <p class="text-gray-600 mb-4">Advanced facial treatments tailored to your skin type and concerns for a radiant, youthful complexion.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary-700 font-bold">From $95</span>
+                            <a href="#booking" class="text-sm font-semibold text-primary-600 hover:text-primary-800 transition">Book Now →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 6 -->
+                <div class="service-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+                    <div class="h-48 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
+                        <svg class="w-20 h-20 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Express Services</h3>
+                        <p class="text-gray-600 mb-4">Quick beauty fixes for busy schedules, including blowouts, makeup touch-ups, and nail services.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary-700 font-bold">From $45</span>
+                            <a href="#booking" class="text-sm font-semibold text-primary-600 hover:text-primary-800 transition">Book Now →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-16">
+                <a href="#booking" class="inline-block bg-gradient-to-r from-primary-600 to-secondary-500 hover:from-primary-700 hover:to-secondary-600 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 text-lg">
+          View All Services
+        </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Specialists Section -->
+    <section id="specialists" class="py-16 md:py-24 px-6 bg-gradient-to-b from-primary-50 to-white">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-display font-bold gradient-text inline-block mb-4">Meet Our Specialists</h2>
+                <div class="w-24 h-1 bg-gradient-to-r from-primary-600 to-secondary-500 mx-auto mt-2 mb-6"></div>
+                <p class="text-gray-600 max-w-2xl mx-auto">Our team of internationally trained stylists and therapists bring unparalleled expertise to every service.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Specialist 1 -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden group transform hover:-translate-y-2 transition-all duration-300">
+                    <div class="h-80 bg-gray-200 relative overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center bg-primary-200 text-primary-700">
+                            <svg class="w-24 h-24 opacity-50" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+              </svg>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                            <div class="flex gap-2 justify-center">
+                                <a href="#" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"></path>
+                  </svg>
+                                </a>
+                                <a href="#" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-display font-bold text-gray-800">Sophia Laurent</h3>
+                        <p class="text-primary-600 font-medium mb-3">Creative Director</p>
+                        <p class="text-gray-600 text-sm">With over 15 years in the industry, Sophia specializes in avant-garde styling and editorial looks, having worked at fashion weeks worldwide.</p>
+                    </div>
+                </div>
+
+                <!-- Specialist 2 -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden group transform hover:-translate-y-2 transition-all duration-300">
+                    <div class="h-80 bg-gray-200 relative overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center bg-primary-200 text-primary-700">
+                            <svg class="w-24 h-24 opacity-50" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+              </svg>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                            <div class="flex gap-2 justify-center">
+                                <a href="#" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"></path>
+                  </svg>
+                                </a>
+                                <a href="#" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-display font-bold text-gray-800">Michael Chen</h3>
+                        <p class="text-primary-600 font-medium mb-3">Texture Specialist</p>
+                        <p class="text-gray-600 text-sm">Specializing in curly and textured hair, Michael brings a unique perspective to hair styling with his background in fashion design and international training.</p>
+                    </div>
+                </div>
+
+                <!-- Specialist 3 -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden group transform hover:-translate-y-2 transition-all duration-300">
+                    <div class="h-80 bg-gray-200 relative overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center bg-primary-200 text-primary-700">
+                            <svg class="w-24 h-24 opacity-50" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+              </svg>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                            <div class="flex gap-2 justify-center">
+                                <a href="#" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"></path>
+                  </svg>
+                                </a>
+                                <a href="#" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-display font-bold text-gray-800">Priya Sharma</h3>
+                        <p class="text-primary-600 font-medium mb-3">Beauty Therapist</p>
+                        <p class="text-gray-600 text-sm">With expertise in Ayurvedic and modern skincare techniques, Priya creates personalized facial treatments that deliver remarkable results.</p>
+                    </div>
+                </div>
+
+                <!-- Specialist 4 -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden group transform hover:-translate-y-2 transition-all duration-300">
+                    <div class="h-80 bg-gray-200 relative overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center bg-primary-200 text-primary-700">
+                            <svg class="w-24 h-24 opacity-50" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+              </svg>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                            <div class="flex gap-2 justify-center">
+                                <a href="#" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"></path>
+                  </svg>
+                                </a>
+                                <a href="#" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-display font-bold text-gray-800">Amal Perera</h3>
+                        <p class="text-primary-600 font-medium mb-3">Nail Art Specialist</p>
+                        <p class="text-gray-600 text-sm">Award-winning nail artist whose meticulous attention to detail and creativity has earned him a devoted clientele and industry recognition.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Experiences Section -->
+    <section id="experiences" class="py-16 md:py-24 px-6 bg-white">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-display font-bold gradient-text inline-block mb-4">The Medusa Experience</h2>
+                <div class="w-24 h-1 bg-gradient-to-r from-primary-600 to-secondary-500 mx-auto mt-2 mb-6"></div>
+                <p class="text-gray-600 max-w-2xl mx-auto">More than just a salon visit, Medusa offers a complete sensory experience designed to rejuvenate and transform.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-16">
+                <div>
+                    <div class="space-y-10">
+                        <!-- Experience 1 -->
+                        <div class="flex">
+                            <div class="flex-shrink-0 mr-6">
+                                <div class="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-primary-700">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Personalized Consultation</h3>
+                                <p class="text-gray-600">Begin with a thorough one-on-one consultation where our specialists understand your unique style, preferences, and concerns for truly personalized service.</p>
+                            </div>
+                        </div>
+
+                        <!-- Experience 2 -->
+                        <div class="flex">
+                            <div class="flex-shrink-0 mr-6">
+                                <div class="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-primary-700">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
+                  </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Relaxation Lounge</h3>
+                                <p class="text-gray-600">Unwind in our relaxation lounge with complimentary herbal teas, infused water, and aromatherapy to prepare you for your treatment.</p>
+                            </div>
+                        </div>
+
+                        <!-- Experience 3 -->
+                        <div class="flex">
+                            <div class="flex-shrink-0 mr-6">
+                                <div class="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-primary-700">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+                  </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Sensory Experience</h3>
+                                <p class="text-gray-600">Enjoy our signature scalp massage with premium essential oils, creating a multisensory experience that promotes deep relaxation.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="space-y-10">
+                        <!-- Experience 4 -->
+                        <div class="flex">
+                            <div class="flex-shrink-0 mr-6">
+                                <div class="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-primary-700">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                  </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Private Suites</h3>
+                                <p class="text-gray-600">For VIP clients, we offer private salon suites with personalized music selection, champagne service, and complete privacy.</p>
+                            </div>
+                        </div>
+
+                        <!-- Experience 5 -->
+                        <div class="flex">
+                            <div class="flex-shrink-0 mr-6">
+                                <div class="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-primary-700">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                  </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Digital Lookbook</h3>
+                                <p class="text-gray-600">Receive a digital lookbook after your service with maintenance tips, product recommendations, and styling instructions.</p>
+                            </div>
+                        </div>
+
+                        <!-- Experience 6 -->
+                        <div class="flex">
+                            <div class="flex-shrink-0 mr-6">
+                                <div class="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-primary-700">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                  </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-gray-800 mb-2">Aftercare Program</h3>
+                                <p class="text-gray-600">Our relationship continues after your visit with follow-up care, exclusive offers, and invitations to special events.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-20 bg-gradient-to-r from-primary-600 to-secondary-500 rounded-2xl p-8 md:p-12 text-white">
+                <div class="max-w-4xl mx-auto text-center">
+                    <h3 class="text-2xl md:text-3xl font-display font-bold mb-4">Ready for Your Transformation?</h3>
+                    <p class="text-primary-100 mb-6">Experience the Medusa difference with our signature luxury treatments tailored just for you.</p>
+                    <a href="#booking" class="inline-block bg-white hover:bg-gray-100 text-primary-700 font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 text-lg">
+            Book Your Experience
+          </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="py-16 md:py-24 px-6 bg-primary-50">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-display font-bold gradient-text inline-block mb-4">Our Work</h2>
+                <div class="w-24 h-1 bg-gradient-to-r from-primary-600 to-secondary-500 mx-auto mt-2 mb-6"></div>
+                <p class="text-gray-600 max-w-2xl mx-auto">Explore our portfolio of transformations and artistic creations.</p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <!-- Gallery items would be here -->
+                <div class="bg-gray-200 h-64 rounded-lg flex items-center justify-center text-gray-400">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+                </div>
+                <div class="bg-gray-200 h-64 rounded-lg flex items-center justify-center text-gray-400">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+                </div>
+                <div class="bg-gray-200 h-64 rounded-lg flex items-center justify-center text-gray-400">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+                </div>
+                <div class="bg-gray-200 h-64 rounded-lg flex items-center justify-center text-gray-400">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+                </div>
+                <div class="bg-gray-200 h-64 rounded-lg flex items-center justify-center text-gray-400">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+                </div>
+                <div class="bg-gray-200 h-64 rounded-lg flex items-center justify-center text-gray-400">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+                </div>
+                <div class="bg-gray-200 h-64 rounded-lg flex items-center justify-center text-gray-400">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+                </div>
+                <div class="bg-gray-200 h-64 rounded-lg flex items-center justify-center text-gray-400">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0
